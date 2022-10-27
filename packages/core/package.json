@@ -1,0 +1,23 @@
+{
+  "name": "@selkt/core",
+  "description": "Global stores",
+  "authors": "brynshanahan",
+  "version": "1.0.39",
+  "main": "dist/main/index.js",
+  "module": "dist/module/index.es.js",
+  "umd": "dist/umd/selkt-core.js",
+  "umdMin": "dist/umd/selkt-core.min.js",
+  "sideEffects": false,
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "publish": "npm publish --scope=public"
+  },
+  "peerDependencies": {
+    "immer": "^8.0.1"
+  },
+  "optionalDependencies": {
+    "immer": "^8.0.1"
+  }
+}

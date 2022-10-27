@@ -1,0 +1,41 @@
+{
+  "name": "selkt",
+  "version": "1.0.39",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "prod": "rollup --config ./rollup.config.prod.js",
+    "build": "rollup --config ./rollup.config.dev.js",
+    "watch": "rollup --config ./rollup.config.dev.js --watch",
+    "dev": "npm run watch",
+    "pub": "node ./scripts/publish",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@babel/plugin-proposal-class-properties": "^7.12.13",
+    "@babel/plugin-transform-runtime": "^7.12.15",
+    "@babel/preset-env": "^7.12.13",
+    "@babel/preset-react": "^7.12.13",
+    "@babel/preset-typescript": "^7.12.13",
+    "@rollup/plugin-babel": "^5.2.3",
+    "@rollup/plugin-commonjs": "^17.1.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^11.1.1",
+    "@rollup/plugin-replace": "^2.3.4",
+    "@types/jest": "^26.0.20",
+    "jest": "^26.6.3",
+    "lodash": "^4.17.20",
+    "rollup": "^2.38.5",
+    "rollup-plugin-node-builtins": "^2.1.2",
+    "rollup-plugin-node-globals": "^1.4.0",
+    "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-typescript2": "^0.29.0",
+    "ts-jest": "^26.5.1"
+  }
+}
