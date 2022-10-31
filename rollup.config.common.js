@@ -1,25 +1,25 @@
-import babel from '@rollup/plugin-babel'
-import builtins from 'rollup-plugin-node-builtins'
-import commonjs from '@rollup/plugin-commonjs'
-import globals from 'rollup-plugin-node-globals'
-import json from '@rollup/plugin-json'
-import replace from '@rollup/plugin-replace'
-import resolve from '@rollup/plugin-node-resolve'
-import typescript from 'rollup-plugin-typescript2'
-import { terser } from 'rollup-plugin-terser'
-import { startCase } from 'lodash'
-import Fs from 'fs'
-import Path from 'path'
+import babel from "@rollup/plugin-babel"
+import builtins from "rollup-plugin-node-builtins"
+import commonjs from "@rollup/plugin-commonjs"
+import globals from "rollup-plugin-node-globals"
+import json from "@rollup/plugin-json"
+import replace from "@rollup/plugin-replace"
+import resolve from "@rollup/plugin-node-resolve"
+import typescript from "rollup-plugin-typescript2"
+import { terser } from "rollup-plugin-terser"
+import { startCase } from "lodash"
+import Fs from "fs"
+import Path from "path"
 /**
  * Return a Rollup configuration for a `pkg` with `env` and `target`.
  */
 
 function configure(pkg, env, target) {
-  const isProd = env === 'production'
-  const isUmd = target === 'umd'
-  const isModule = target === 'module'
-  const isCommonJs = target === 'cjs'
-  let name = pkg.name.replace('@selkt/', '')
+  const isProd = env === "production"
+  const isUmd = target === "umd"
+  const isModule = target === "module"
+  const isCommonJs = target === "cjs"
+  let name = pkg.name.replace("@selkt/", "")
   const input = `packages/${name}/src/index.ts`
   const deps = []
     .concat(pkg.dependencies ? Object.keys(pkg.dependencies) : [])
@@ -27,7 +27,7 @@ function configure(pkg, env, target) {
 
   // Stop Rollup from warning about circular dependencies.
   const onwarn = (warning) => {
-    if (warning.code !== 'CIRCULAR_DEPENDENCY') {
+    if (warning.code !== "CIRCULAR_DEPENDENCY") {
       console.warn(`(!) ${warning.message}`) // eslint-disable-line no-console
     }
   }
@@ -62,7 +62,7 @@ function configure(pkg, env, target) {
     // Replace `process.env.NODE_ENV` with its value, which enables some modules
     // like React and Slate to use their production variant.
     replace({
-      'process.env.NODE_ENV': JSON.stringify(env),
+      "process.env.NODE_ENV": JSON.stringify(env),
     }),
 
     // Register Node.js builtins for browserify compatibility.
@@ -71,18 +71,18 @@ function configure(pkg, env, target) {
     // Use Babel to transpile the result, limiting it to the source code.
     babel({
       include: [`packages/${name}/src/**`],
-      extensions: ['.js', '.ts', '.tsx'],
-      babelHelpers: 'runtime',
+      extensions: [".js", ".ts", ".tsx"],
+      babelHelpers: "runtime",
       presets: [
-        '@babel/preset-typescript',
+        "@babel/preset-typescript",
         [
-          '@babel/preset-env',
+          "@babel/preset-env",
           isUmd
             ? { modules: false }
             : {
                 exclude: [
-                  '@babel/plugin-transform-regenerator',
-                  '@babel/transform-async-to-generator',
+                  "@babel/plugin-transform-regenerator",
+                  "@babel/transform-async-to-generator",
                 ],
                 modules: false,
                 targets: {
@@ -90,11 +90,11 @@ function configure(pkg, env, target) {
                 },
               },
         ],
-        '@babel/preset-react',
+        "@babel/preset-react",
       ],
       plugins: [
         [
-          '@babel/plugin-transform-runtime',
+          "@babel/plugin-transform-runtime",
           isUmd
             ? {}
             : {
@@ -102,7 +102,7 @@ function configure(pkg, env, target) {
                 useESModules: isModule,
               },
         ],
-        '@babel/plugin-proposal-class-properties',
+        "@babel/plugin-proposal-class-properties",
       ],
     }),
 
@@ -120,10 +120,10 @@ function configure(pkg, env, target) {
       input,
       onwarn,
       output: {
-        format: 'umd',
+        format: "umd",
         file: `packages/${name}/${isProd ? pkg.umdMin : pkg.umd}`,
-        exports: 'named',
-        name: startCase(name).replace(/ /g, ''),
+        exports: "named",
+        name: startCase(name).replace(/ /g, ""),
         globals: pkg.umdGlobals,
       },
       external: (id) => {
@@ -140,8 +140,8 @@ function configure(pkg, env, target) {
       output: [
         {
           file: `packages/${name}/${pkg.main}`,
-          format: 'cjs',
-          exports: 'named',
+          format: "cjs",
+          exports: "named",
           sourcemap: true,
         },
       ],
@@ -162,7 +162,7 @@ function configure(pkg, env, target) {
       output: [
         {
           file: `packages/${name}/${pkg.module}`,
-          format: 'es',
+          format: "es",
           sourcemap: true,
         },
       ],
@@ -181,19 +181,19 @@ function configure(pkg, env, target) {
  */
 
 function factory(src, options = {}) {
-  const isProd = options.env === 'production'
+  const isProd = options.env === "production"
   let pkg = require(`${__dirname}/packages/${src}/package.json`)
   return [
-    configure(pkg, 'development', 'cjs', options),
-    configure(pkg, 'development', 'module', options),
-    isProd && configure(pkg, 'development', 'umd', options),
-    isProd && configure(pkg, 'production', 'umd', options),
+    configure(pkg, "development", "cjs", options),
+    configure(pkg, "development", "module", options),
+    isProd && configure(pkg, "development", "umd", options),
+    isProd && configure(pkg, "production", "umd", options),
   ].filter(Boolean)
 }
 
 const mods = (env) =>
   [].concat(
-    ...Fs.readdirSync('./packages').map((folder) => {
+    ...Fs.readdirSync("./packages").map((folder) => {
       let folderName = folder.split(Path.sep).pop()
       return factory(folderName, { env })
     })

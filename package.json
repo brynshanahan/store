@@ -1,8 +1,9 @@
 {
-  "name": "selkt",
+  "name": "store",
   "version": "1.0.39",
   "description": "",
   "main": "index.js",
+  "private": true,
   "scripts": {
     "prod": "rollup --config ./rollup.config.prod.js",
     "build": "rollup --config ./rollup.config.dev.js",
@@ -15,7 +16,8 @@
   "author": "",
   "license": "ISC",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "docs"
   ],
   "devDependencies": {
     "@babel/plugin-proposal-class-properties": "^7.12.13",
@@ -36,6 +38,7 @@
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.29.0",
-    "ts-jest": "^26.5.1"
+    "ts-jest": "^26.5.1",
+    "typescript": "^4.8.4"
   }
 }
