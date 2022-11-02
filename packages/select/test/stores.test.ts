@@ -6,6 +6,7 @@ import {
   flush,
   MutStore,
   Store,
+  EMPTY,
 } from "../src"
 
 describe("equalityChecks", () => {
@@ -143,6 +144,19 @@ describe("MutableStore", () => {
     expect(callback).toBeCalledTimes(2)
     expect(callback).toBeCalledWith([0, 0], undefined)
     expect(callback).toBeCalledWith([1, 10], [0, 0])
+  })
+
+  it("sets state to undefined when returning EMPTY", () => {
+    let store = new MutStore({ count: 0 } as any)
+
+    store.set(() => EMPTY)
+    expect(store.state).toEqual(undefined)
+
+    store.set({ count: 1 })
+    expect(store.state).toEqual({ count: 1 })
+
+    store.set(EMPTY)
+    expect(store.state).toEqual(undefined)
   })
 
   it("lazily subscribes", () => {
@@ -297,6 +311,33 @@ describe("Store", () => {
 
     expect(callback).toBeCalledTimes(1)
     expect(callback).toBeCalledWith(0, undefined)
+  })
+
+  it("can be extended", () => {
+    class MyStore extends Store<number> {
+      initialState = 0
+    }
+
+    let store = new MyStore()
+
+    expect(store.state).toEqual(0)
+
+    store.set(1)
+
+    expect(store.state).toEqual(1)
+  })
+
+  it("sets state to undefined when returning EMPTY", () => {
+    let store = new Store({ count: 0 } as any)
+
+    store.set(() => EMPTY)
+    expect(store.state).toEqual(undefined)
+
+    store.set({ count: 1 })
+    expect(store.state).toEqual({ count: 1 })
+
+    store.set(EMPTY)
+    expect(store.state).toEqual(undefined)
   })
 
   it("updates when changed", () => {

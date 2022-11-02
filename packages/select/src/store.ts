@@ -3,20 +3,23 @@ import { strictEqual } from "./equality-checks"
 export const SUBS = Symbol("subscriber")
 export const STATE = Symbol("state")
 
-const LIMIT = 5
-
 export type Selector<T, R> = (state: T, prevState: T | undefined) => R
-export type OnChange<T = any> = (slice: T) => any
+export type OnChange<T = any> = (slice: T, prev?: T) => any
 export type Subscriber = () => any
 export type Callback = () => any
 export type Subscription = () => void
 export type FunctionSetter<T> = (state: T) => T | void
+// If the "value" is a function then they must use a function setter
 export type Setter<T> = T extends (...args: any[]) => any
   ? FunctionSetter<T>
   : T | FunctionSetter<T>
 
 let depTracking: Set<StoreApi<any>> | null = null
 let flushing: Callback | null = null
+
+export function isFunctionSetter<T>(val: any): val is FunctionSetter<T> {
+  return typeof val === "function"
+}
 
 export const EMPTY = {}
 
@@ -31,42 +34,48 @@ export type StoreApi<T> = {
 
 let notifiers: Set<Callback> = new Set()
 
-export function modify<T>(value: T, modifier: Setter<T>) {
-  if (typeof modifier === "function") {
+export function modify<T>(value: T, modifier: Setter<T>): T {
+  if (isFunctionSetter(modifier)) {
     let result = modifier(value)
 
+    // The value has been mutated
     if (result === undefined) {
       return value
-    } else if (result === EMPTY) {
-      return undefined
     } else {
-      return result
+      // @ts-ignore
+      return result === EMPTY ? undefined : result
     }
-  } else if (value === EMPTY) {
-    return undefined
-  } else {
-    return modifier
   }
+
+  // @ts-ignore
+  return modifier === EMPTY ? undefined : modifier
 }
 
 export class MutStore<T> implements StoreApi<T> {
-  [STATE]: T;
+  [STATE]: T = EMPTY as any;
   [SUBS] = new Set<Callback>()
 
-  initialState: T
+  initialState!: T
 
   get state(): T {
     if (depTracking) {
       depTracking.add(this)
     }
-    return this[STATE]
+    let val = this[STATE]
+    return val === EMPTY ? this.initialState : val
   }
 
-  constructor(initialState: T) {
-    this[STATE] = this.initialState = initialState
+  set state(value: T) {
+    this[STATE] = value
   }
 
-  notify() {
+  constructor(initialState: T = EMPTY as any) {
+    if (initialState !== EMPTY) {
+      this[STATE] = this.initialState = initialState
+    }
+  }
+
+  queue() {
     for (let cb of this[SUBS]) {
       notifiers.add(cb)
     }
@@ -75,7 +84,7 @@ export class MutStore<T> implements StoreApi<T> {
   set(setter: Setter<T>) {
     let prev = this[STATE]
     this[STATE] = modify(prev, setter)
-    this.notify()
+    this.queue()
     flush()
   }
 }
@@ -136,32 +145,25 @@ type SelectResult<Slice> = {
 
 export function select<Slice>(
   selector: () => Slice,
-  equalityFn: <A extends Slice, B extends Slice | undefined>(
+  onChange: OnChange<Slice>,
+  equalityFn?: <A extends Slice, B extends Slice | undefined>(
     a: A,
     b?: B
   ) => boolean
 ): SelectResult<Slice>
 export function select<Slice>(
   selector: () => Slice,
-  onChange?: (value: Slice, prev: Slice | undefined) => any,
+  onChange: OnChange<Slice>,
   equalityFn: <A extends Slice, B extends Slice | undefined>(
     a: A,
     b?: B
   ) => boolean = strictEqual
-): SelectResult<Slice> {
+): Subscription {
   let prev: Slice | undefined = undefined
   let stores = new Set<StoreApi<any>>()
   let clearSubscription: Subscription = () => {}
-  let changers = new Set()
-  if ()
 
-  const update = (value: Slice, prev?: Slice) => {
-    for (let changer of changers) {
-      changer(value, prev)
-    }
-  }
-
-  const subscriber = () => {
+  function subscriber() {
     let ourPrev = prev
     clearSubscription()
     const slice = collect(() => selector(), stores)
@@ -169,32 +171,14 @@ export function select<Slice>(
 
     if (!equalityFn(slice, prev)) {
       prev = slice
-      update(slice, ourPrev)
+      onChange(slice, ourPrev)
     }
   }
 
   subscriber()
 
-  const api = () => {
+  return () => {
     clearSubscription()
-    changers.clear()
+    notifiers.delete(subscriber)
   }
-
-  api.state = prev as Slice | undefined
-
-  api.subscribe = (cb: OnChange<Slice>) => {
-    changers.add(cb)
-    return () => {
-      console.log("unsub")
-      changers.delete(cb)
-    }
-  }
-
-  Object.defineProperty(api, "state", {
-    get() {
-      return prev
-    },
-  })
-
-  return api
 }

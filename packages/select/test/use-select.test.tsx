@@ -2,7 +2,7 @@ import React from "react"
 import "@testing-library/jest-dom"
 import { useSelect, Store, MutStore, flush, shallowEqualArray } from "../src"
 import { act, renderHook } from "@testing-library/react-hooks"
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen } from "@testing-library/react"
 import { createElement } from "react"
 
 describe(`useSelect`, () => {
@@ -21,7 +21,7 @@ describe(`useSelect`, () => {
       })
     })
 
-    expect(selector).toBeCalledTimes(2)
+    expect(selector).toBeCalledTimes(5)
     expect(result.current).toBe(1)
     expect(store.state).toBe(initialState)
 
@@ -31,6 +31,8 @@ describe(`useSelect`, () => {
         state.test = 2
       })
     })
+
+    expect(selector).toBeCalledTimes(5)
   })
 
   it("can subscribe to multiple stores", () => {
@@ -44,20 +46,20 @@ describe(`useSelect`, () => {
       return createElement("div", {}, result)
     }
 
-    const { unmount } = render(<Comp />)
+    render(<Comp />)
 
     act(() => {
       a.set((state) => ++state)
     })
 
     expect(screen.getByText("1")).toBeInTheDocument()
-    expect(selector).toBeCalledTimes(2)
+    expect(selector).toBeCalledTimes(7)
 
     act(() => {
       b.set((state) => ++state)
     })
 
-    expect(selector).toBeCalledTimes(3)
+    expect(selector).toBeCalledTimes(9)
     expect(screen.getByText("2")).toBeInTheDocument()
 
     act(() => {
@@ -74,12 +76,13 @@ describe(`useSelect`, () => {
     const a = new MutStore(true)
     const b = new Store("b")
     const c = new Store("c")
+    const callback = jest.fn(() => {
+      if (a.state) return b.state
+      else return c.state
+    })
 
     const Comp = () => {
-      const value = useSelect(() => {
-        if (a.state) return b.state
-        else return c.state
-      })
+      const value = useSelect(callback)
       return createElement("div", {}, value)
     }
 
@@ -91,7 +94,13 @@ describe(`useSelect`, () => {
 
     expect(screen.queryByText("c")).toBeInTheDocument()
 
-    b.set("d")
+    const prevCalls = callback.mock.calls.length
+    // Because the callback did not enter the if (a.state) branch, it should not have subscribed to b
+    b.set("b2")
+    expect(callback).toBeCalledTimes(prevCalls)
+
+    c.set("d")
+    expect(c.state).toBe("d")
 
     expect(screen.queryByText("d")).toBeInTheDocument()
   })
@@ -115,10 +124,8 @@ describe(`useSelect`, () => {
     expect(store.state).not.toBe(initialState)
 
     unmount()
-    act(() => {
-      store.set((state) => {
-        state.test = 2
-      })
+    store.set((state) => {
+      state.test = 2
     })
 
     expect(selector).not.toReturnWith(2)
@@ -162,7 +169,7 @@ describe(`useSelect`, () => {
 
   it("respects equality functions", () => {
     const store = new Store({ test: [] as { id: number }[] })
-    const selector = jest.fn(() => store.state.test.map((user: any) => user.id))
+    const selector = jest.fn(() => store.state.test.map((user) => user.id))
 
     const onRender = jest.fn()
 
@@ -188,7 +195,7 @@ describe(`useSelect`, () => {
 
     expect(onRender).toBeCalledTimes(1)
 
-    expect(selector).toBeCalledTimes(5)
+    expect(selector).toBeCalledTimes(4)
     expect(container.querySelector("div")?.textContent).toBe("")
 
     act(() => {
@@ -199,7 +206,7 @@ describe(`useSelect`, () => {
 
     expect(onRender).toBeCalledTimes(2)
 
-    expect(selector).toBeCalledTimes(10)
+    expect(selector).toBeCalledTimes(8)
     expect(container.querySelector("div")?.textContent).toBe("1")
 
     unmount()
@@ -210,7 +217,8 @@ describe(`useSelect`, () => {
       })
     })
 
-    expect(selector).toBeCalledTimes(10)
+    expect(store.state.test[0].id).toBe(2)
+    expect(selector).toBeCalledTimes(8)
   })
 
   it("Picks out the right value", () => {
