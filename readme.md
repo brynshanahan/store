@@ -8,6 +8,14 @@ Small selectable state
 
 All stores expose a `set` method. The `set` method accepts a function or a value. If a function is passed, the function will be called with the current value of the store. The function can mutate current state or return a new value. The new value will be assigned to the `.state` property of the store.
 
+```ts
+interface StoreApi<T> {
+  set(callbackOrValue: T | FunctionSetter<T>): void
+  get state(): T
+  initialState: T
+}
+```
+
 #### function select
 
 The `select` accepts a callback (selector) that should return values from stores. When a store's .state property is accessed it will subscribe the selector to that store. If the store is updated with .set the selector will be called again.
@@ -17,7 +25,7 @@ When the value returned by the selector is different from the previous value, th
 ```ts
 function select(
   selector: () => Slice,
-  onChange?: (slice: Slice, prev: Slice | undefined)
+  onChange: (slice: Slice, prev: Slice | undefined)
 ): () => void;
 ```
 
@@ -40,6 +48,33 @@ toggle.set(false)
 // onChange will be called with 'b', 'a' and will be listening to changes in toggle and b
 a.set("a1") // selector will not be re-run
 b.set("b1") // onChange will be called with 'b1', 'b'
+```
+
+#### function flush
+
+Flush can be used to group multiple `.set` calls into one update. This can be useful when you want to update multiple stores at the same time. The `flush` function accepts a callback within which you can update stores as many times as you like. When the callback exits, all selections will be evaluated.
+
+```ts
+const a = new Store(0)
+const b = new MutStore(0)
+
+const onChangeA = () => {}
+
+select(() => a.state, onChangeA)
+select(() => b.state, onChangeA)
+
+flush(() => {
+  a.set(1)
+  // no update
+  b.set(1)
+  // no update
+  b.set(2)
+  // no update
+  a.set(10)
+})
+
+// onChangeA will be called with 10, 0
+// onChangeB will be called with 2, 0
 ```
 
 #### MutStore – Mutable state
