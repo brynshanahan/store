@@ -158,50 +158,7 @@ Because Store uses immer, whenever any property is mutated all the containing ob
 */
 ```
 
-## React
-
-The select method lets you encapsulate subscription logic outside of react. This is useful when you want to subscribe to multiple stores in a single component.
-
-```tsx
-const authenticated = new Store()
-const form = new Store()
-
-function Comp() {
-  const formState = useSelect(() => authenticated.state && form.state)
-
-  return <>{formState}</>
-}
-
-// vs other stores
-function Comp() {
-  const authState = useStore(authenticated, (state) => state)
-  const formState = useStore(form, (state) => authState && state)
-
-  return <>{formState}</>
-}
-```
-
-### useSelect
-
-You can use stores in React with the `useStore` hook. It has a very similar api to the select function
-
-```tsx
-import { MutStore, useSelect } from "select"
-
-let store = new MutStore(0)
-
-export default function App() {
-  let num = useStore(() => store.state * 2)
-
-  const onClick = () => {
-    store.set((state) => ++state)
-  }
-
-  return <div onClick={onClick}>{num}</div>
-}
-```
-
-### Extending stores
+#### Extending stores
 
 You can extend the Store class to create your own stores. This lets you add your own methods to the class to create a more convenient api.
 
@@ -230,5 +187,48 @@ export class Auth extends Store {
         })
       })
   }
+}
+```
+
+## React
+
+The select method lets you encapsulate subscription logic outside of react. This is useful when you want to subscribe to multiple stores in a single component.
+
+```tsx
+const authenticated = new Store()
+const form = new Store()
+
+function Comp() {
+  const formState = useSelect(() => authenticated.state && form.state)
+
+  return <>{formState}</>
+}
+
+// vs other stores
+function Comp() {
+  const authState = useStore(authenticated, (state) => state)
+  const formState = useStore(form, (state) => authState && state)
+
+  return <>{formState}</>
+}
+```
+
+#### useSelect
+
+You can use stores in React with the `useStore` hook. It has a very similar api to the select function
+
+```tsx
+import { MutStore, useSelect } from "select"
+
+let store = new MutStore(0)
+
+export default function App() {
+  let num = useStore(() => store.state * 2)
+
+  const onClick = () => {
+    store.set((state) => ++state)
+  }
+
+  return <div onClick={onClick}>{num}</div>
 }
 ```
