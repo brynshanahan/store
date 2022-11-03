@@ -4,7 +4,7 @@ Small selectable state
 
 ### Vanilla JS
 
-#### class Stores
+#### class Store, class MutStore
 
 All stores expose a `set` method. The `set` method accepts a function or a value. If a function is passed, the function will be called with the current value of the store. The function can mutate current state or return a new value. The new value will be assigned to the `.state` property of the store.
 
